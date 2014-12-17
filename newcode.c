@@ -11,6 +11,9 @@ static nfc_context *context = NULL;
 static nfc_target nt;
 static nfc_modulation nm = { .nmt = NMT_ISO14443A, .nbr = NBR_106 };
 static int keys[] = {
+	// insert new keys here
+	0x50, 0x49, 0x4e, 0x41, 0x44, 0x4f,
+	// this should be deleted
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	0xd3, 0xf7, 0xd3, 0xf7, 0xd3, 0xf7,
 	0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5,
@@ -19,13 +22,13 @@ static int keys[] = {
 	0x1a, 0x98, 0x2c, 0x7e, 0x45, 0x9a,
 	0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0xa0, 0xb0, 0xc0, 0xd0, 0xe0, 0xf0
+	0xa0, 0xb0, 0xc0, 0xd0, 0xe0, 0xf0,
 };
 
 void print_hex(uint8_t pbtData[], int szDate) {
 	int i;
 	for(i=0; i<szDate; i++)
-		printf("%02x", pbtData[i]);
+		printf("%02x ", pbtData[i]);
 	printf("\n");
 }
 
@@ -42,7 +45,10 @@ void readBlock(int start, int end) {
 	}
 }
 
-bool authenticate(int block) {
+bool authenticate(int block, int length, char *userkey[]) {
+	if(length != 6)
+		return false;
+
 	mp.mpa.abtAuthUid[0] = nt.nti.nai.abtUid[0];
 	mp.mpa.abtAuthUid[1] = nt.nti.nai.abtUid[1];
 	mp.mpa.abtAuthUid[2] = nt.nti.nai.abtUid[2];
@@ -58,17 +64,24 @@ bool authenticate(int block) {
 		mp.mpa.abtKey[5] = keys[i*6+5];
 		printf("Keys: %02x, %02x, %02x, %02x, %02x, %02x\n", mp.mpa.abtKey[0], mp.mpa.abtKey[1], mp.mpa.abtKey[2], mp.mpa.abtKey[3], mp.mpa.abtKey[4], mp.mpa.abtKey[5]);
 		printf("Auth ID: %02x, %02x, %02x, %02x\n", mp.mpa.abtAuthUid[0], mp.mpa.abtAuthUid[1], mp.mpa.abtAuthUid[2], mp.mpa.abtAuthUid[3]);
-				
-		if(nfc_initiator_mifare_cmd(pnd, MC_AUTH_A, block, &mp))
-			return true;
+		bool res1 = nfc_initiator_mifare_cmd(pnd, MC_AUTH_A, block, &mp);
+		
+		mp.mpa.abtKey[0] = strtol(userkey[0], NULL, 16);
+		mp.mpa.abtKey[1] = strtol(userkey[1], NULL, 16);
+		mp.mpa.abtKey[2] = strtol(userkey[2], NULL, 16);
+		mp.mpa.abtKey[3] = strtol(userkey[3], NULL, 16);
+		mp.mpa.abtKey[4] = strtol(userkey[4], NULL, 16);
+		mp.mpa.abtKey[5] = strtol(userkey[5], NULL, 16);
+		printf("Keys: %02x, %02x, %02x, %02x, %02x, %02x\n", mp.mpa.abtKey[0], mp.mpa.abtKey[1], mp.mpa.abtKey[2], mp.mpa.abtKey[3], mp.mpa.abtKey[4], mp.mpa.abtKey[5]);
+		bool res2 = nfc_initiator_mifare_cmd(pnd, MC_AUTH_B, block, &mp);
 			
-		if(nfc_initiator_mifare_cmd(pnd, MC_AUTH_B, block, &mp))
+		if(res1 && res2)
 			return true;
 	}
 	return false;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
 	nfc_init(&context);
 	if(context == NULL) {
 		printf("Unable to initialize libnfc\n");
@@ -98,18 +111,17 @@ int main() {
 	
 	nfc_device_set_property_bool(pnd, NP_ACTIVATE_FIELD, true);
 	
-	printf("Connected to NFC Reader: %s\n", nfc_device_get_name(pnd));
+	// printf("Connected to NFC Reader: %s\n", nfc_device_get_name(pnd));
 	
 	int sector, j;
-	for(sector = 1; sector<9; sector++) {
+	for(sector = 1; sector<2; sector++) {
 		printf("Getting sector %d\n", sector);
 		int authBlock = (sector*4)-1;
 		int startBlock = authBlock - 3;
 		nfc_initiator_select_passive_target(pnd, nm, NULL, 0, &nt);
-		bool res = authenticate(authBlock);
+		bool res = authenticate(authBlock, argc-1, argv+1);
 		if(res)
-			printf("Authenticated!\n");
-			//readBlock(startBlock, authBlock);
+			readBlock(startBlock, authBlock);
 	}
 	
 	printf("Closing connection to NFC Reader...\n");

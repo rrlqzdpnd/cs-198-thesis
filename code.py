@@ -3,6 +3,13 @@
 from gaugette.fonts import arial_16
 import RPi.GPIO as GPIO
 import time, sys, gaugette.ssd1306, subprocess
+		
+def displaymessage(message1, message2=""):
+	led.clear_display()
+	led.draw_text3(0, 0, message1, font)
+	if message2 != "":
+		led.draw_text3(0, 16, message2, font)
+	led.display()
 
 def keypadinput():
 	input = ""
@@ -15,14 +22,9 @@ def keypadinput():
 				return input
 			else:	
 				if len(input) == 0:
-					led.clear_display()
-					led.draw_text3(0, 0, "Enter PIN (# to", font)
-					led.draw_text3(0, 16, " backspace):", font)
-					led.display()
+					displaymessage("Enter PIN (# to", "backspace)")
 				else:
-					led.clear_display()
-					led.draw_text3(0, 8, starbuffer, font)
-					led.display()
+					displaymessage(starbuffer)
 
 				for y in range(3):
 					GPIO.output(col[y], 0)
@@ -39,6 +41,12 @@ def keypadinput():
 		print "Cleaning up", e
 	except Exception as e:
 		print "Cleaning up", e
+		
+def inputtohex(input):
+	toret = ""
+	for x in range(len(input)):
+		toret += "%0.2X " % ord(input[x])
+	return toret
 	
 def main():
 	##
@@ -51,27 +59,20 @@ def main():
 	#	> If successful, program logs to server User identity
 	#
 
-	input = keypadinput()
-	
-	
+	input = inputtohex(keypadinput())
 	
 	print "You typed:", input
-		
-	led.clear_display()
-	led.draw_text3(0, 0, "Please tap your", font)
-	led.draw_text3(0, 16, "RFID", font)
-	led.display()
+	input = input.split(" ")
 	
-	proc = subprocess.Popen("./newcode", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	displaymessage("Please tap your", "RFID")
+	
+	proc = subprocess.Popen(["./newcode", input[0], input[1], input[2], input[3], input[4], input[5]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	(output, error) = proc.communicate()
 	
 	print output
 	if output != "":
-		led.clear_display()
-		led.draw_text3(0, 0, "Welcome!", font)
-		led.draw_text3(0, 16, "", font)
-		led.display()
-		time.sleep(5)
+		displaymessage("Welcome!")
+		time.sleep(3)
 		
 	
 	led.clear_display()
