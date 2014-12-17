@@ -30,7 +30,7 @@ def main():
 	(output, error) = proc.communicate()
 	print output
 	
-	# subprocess.Popen(["rm", "tmp.dmp"])
+	subprocess.Popen(["rm", "tmp.dmp"])
 	
 if __name__ == "__main__":
 	main()
