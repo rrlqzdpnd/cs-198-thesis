@@ -14,7 +14,7 @@ static int keys[] = {
 	// insert new keys here
 	0x50, 0x49, 0x4e, 0x41, 0x44, 0x4f,
 	0x31, 0x32, 0x31, 0x32, 0x31, 0x32,
-	// this should be deleted
+	// these should be deleted
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	0xd3, 0xf7, 0xd3, 0xf7, 0xd3, 0xf7,
 	0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5,
@@ -57,27 +57,31 @@ bool authenticate(int block, int length, char *userkey[]) {
 	
 	int i;
 	for(i=0; i<9; i++) {
+		nfc_initiator_select_passive_target(pnd, nm, NULL, 0, &nt);
 		mp.mpa.abtKey[0] = keys[i*6+0];
 		mp.mpa.abtKey[1] = keys[i*6+1];
 		mp.mpa.abtKey[2] = keys[i*6+2];
 		mp.mpa.abtKey[3] = keys[i*6+3];
 		mp.mpa.abtKey[4] = keys[i*6+4];
 		mp.mpa.abtKey[5] = keys[i*6+5];
-		printf("Keys: %02x, %02x, %02x, %02x, %02x, %02x\n", mp.mpa.abtKey[0], mp.mpa.abtKey[1], mp.mpa.abtKey[2], mp.mpa.abtKey[3], mp.mpa.abtKey[4], mp.mpa.abtKey[5]);
 		printf("Auth ID: %02x, %02x, %02x, %02x\n", mp.mpa.abtAuthUid[0], mp.mpa.abtAuthUid[1], mp.mpa.abtAuthUid[2], mp.mpa.abtAuthUid[3]);
+		printf("Key A: %02x, %02x, %02x, %02x, %02x, %02x\n", mp.mpa.abtKey[0], mp.mpa.abtKey[1], mp.mpa.abtKey[2], mp.mpa.abtKey[3], mp.mpa.abtKey[4], mp.mpa.abtKey[5]);
 		bool res1 = nfc_initiator_mifare_cmd(pnd, MC_AUTH_A, block, &mp);
 		
+		nfc_initiator_select_passive_target(pnd, nm, NULL, 0, &nt);
 		mp.mpa.abtKey[0] = strtol(userkey[0], NULL, 16);
 		mp.mpa.abtKey[1] = strtol(userkey[1], NULL, 16);
 		mp.mpa.abtKey[2] = strtol(userkey[2], NULL, 16);
 		mp.mpa.abtKey[3] = strtol(userkey[3], NULL, 16);
 		mp.mpa.abtKey[4] = strtol(userkey[4], NULL, 16);
 		mp.mpa.abtKey[5] = strtol(userkey[5], NULL, 16);
-		printf("Keys: %02x, %02x, %02x, %02x, %02x, %02x\n", mp.mpa.abtKey[0], mp.mpa.abtKey[1], mp.mpa.abtKey[2], mp.mpa.abtKey[3], mp.mpa.abtKey[4], mp.mpa.abtKey[5]);
+		printf("Key B: %02x, %02x, %02x, %02x, %02x, %02x\n", mp.mpa.abtKey[0], mp.mpa.abtKey[1], mp.mpa.abtKey[2], mp.mpa.abtKey[3], mp.mpa.abtKey[4], mp.mpa.abtKey[5]);
 		bool res2 = nfc_initiator_mifare_cmd(pnd, MC_AUTH_B, block, &mp);
 			
 		if(res1 && res2)
 			return true;
+	
+		printf("\n");
 	}
 	return false;
 }
