@@ -2,7 +2,7 @@
 
 from gaugette.fonts import arial_16
 import RPi.GPIO as GPIO
-import time, sys, gaugette.ssd1306, subprocess
+import time, sys, gaugette.ssd1306, subprocess, socket
 		
 def displaymessage(message1, message2=""):
 	led.clear_display()
@@ -71,6 +71,11 @@ def main():
 	
 	print output
 	if output != "":
+		# sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		# sock.bind((raw_input("Enter IP address of host: "), 1625))
+		# sock.send() #  send auth string
+		# sock.recv(1024)
+		 
 		displaymessage("Welcome!")
 		time.sleep(3)
 		

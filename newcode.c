@@ -29,7 +29,7 @@ static int keys[] = {
 void print_hex(uint8_t pbtData[], int szDate) {
 	int i;
 	for(i=0; i<szDate; i++)
-		printf("%02x ", pbtData[i]);
+		printf("%02x", pbtData[i]);
 	printf("\n");
 }
 
@@ -38,7 +38,7 @@ void readBlock(int start, int end) {
 	for(i=start; i<=end; i++) {
 		bool res = nfc_initiator_mifare_cmd(pnd, MC_READ, i, &mp);
 		if(res) {
-			printf("Block %d data: ", i);
+			// printf("Block %d data: ", i);
 			print_hex(mp.mpd.abtData, 16);
 		}
 		else
@@ -64,8 +64,8 @@ bool authenticate(int block, int length, char *userkey[]) {
 		mp.mpa.abtKey[3] = keys[i*6+3];
 		mp.mpa.abtKey[4] = keys[i*6+4];
 		mp.mpa.abtKey[5] = keys[i*6+5];
-		printf("Auth ID: %02x, %02x, %02x, %02x\n", mp.mpa.abtAuthUid[0], mp.mpa.abtAuthUid[1], mp.mpa.abtAuthUid[2], mp.mpa.abtAuthUid[3]);
-		printf("Key A: %02x, %02x, %02x, %02x, %02x, %02x\n", mp.mpa.abtKey[0], mp.mpa.abtKey[1], mp.mpa.abtKey[2], mp.mpa.abtKey[3], mp.mpa.abtKey[4], mp.mpa.abtKey[5]);
+		// printf("Auth ID: %02x, %02x, %02x, %02x\n", mp.mpa.abtAuthUid[0], mp.mpa.abtAuthUid[1], mp.mpa.abtAuthUid[2], mp.mpa.abtAuthUid[3]);
+		// printf("Key A: %02x, %02x, %02x, %02x, %02x, %02x\n", mp.mpa.abtKey[0], mp.mpa.abtKey[1], mp.mpa.abtKey[2], mp.mpa.abtKey[3], mp.mpa.abtKey[4], mp.mpa.abtKey[5]);
 		bool res1 = nfc_initiator_mifare_cmd(pnd, MC_AUTH_A, block, &mp);
 		
 		nfc_initiator_select_passive_target(pnd, nm, NULL, 0, &nt);
@@ -75,13 +75,13 @@ bool authenticate(int block, int length, char *userkey[]) {
 		mp.mpa.abtKey[3] = strtol(userkey[3], NULL, 16);
 		mp.mpa.abtKey[4] = strtol(userkey[4], NULL, 16);
 		mp.mpa.abtKey[5] = strtol(userkey[5], NULL, 16);
-		printf("Key B: %02x, %02x, %02x, %02x, %02x, %02x\n", mp.mpa.abtKey[0], mp.mpa.abtKey[1], mp.mpa.abtKey[2], mp.mpa.abtKey[3], mp.mpa.abtKey[4], mp.mpa.abtKey[5]);
+		// printf("Key B: %02x, %02x, %02x, %02x, %02x, %02x\n", mp.mpa.abtKey[0], mp.mpa.abtKey[1], mp.mpa.abtKey[2], mp.mpa.abtKey[3], mp.mpa.abtKey[4], mp.mpa.abtKey[5]);
 		bool res2 = nfc_initiator_mifare_cmd(pnd, MC_AUTH_B, block, &mp);
 			
 		if(res1 && res2)
 			return true;
 	
-		printf("\n");
+		// printf("\n");
 	}
 	return false;
 }
@@ -120,13 +120,12 @@ int main(int argc, char *argv[]) {
 	
 	int sector, j;
 	for(sector = 1; sector<2; sector++) {
-		printf("Getting sector %d\n", sector);
 		int authBlock = (sector*4)-1;
 		int startBlock = authBlock - 3;
 		nfc_initiator_select_passive_target(pnd, nm, NULL, 0, &nt);
 		bool res = authenticate(authBlock, argc-1, argv+1);
 		if(res)
-			readBlock(startBlock, authBlock);
+			readBlock(1, 1);
 	}
 	
 	printf("Closing connection to NFC Reader...\n");
