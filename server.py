@@ -87,7 +87,13 @@ class Server(object):
 		except Exception:
 			print "Something went wrong with logging"
 
+	def close(self):
+		self.sock.close()
+
 if __name__ == "__main__":
 	server = Server()
-	server.listen()
+	try:
+		server.listen()
+	except (KeyboardInterrupt, Exception, socket.error):
+		server.close()
 	
