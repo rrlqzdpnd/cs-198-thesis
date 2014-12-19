@@ -14,9 +14,9 @@ def register(authstring, firstname, lastname):
 		while True:
 			sock.send("[REGISTER]\t" + authstringbuff + "\t" + lastname + "\t" + firstname)
 			response = sock.recv(1024)
-			if response[:6] == "[DONE]":
+			if response == "[DONE]":
 				break
-			elif response[:6] == "[FAIL]":
+			elif response == "[FAIL]":
 				sock.send("[EXIT]")
 				sock.close()
 				return False
@@ -27,6 +27,8 @@ def register(authstring, firstname, lastname):
 		sock.close()
 		return True
 	except (Exception, socket.error) as e:
+		sock.send("[EXIT]")
+		sock.close()
 		return False
 
 def main():

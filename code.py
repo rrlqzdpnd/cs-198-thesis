@@ -2,7 +2,7 @@
 
 from gaugette.fonts import arial_16
 import RPi.GPIO as GPIO
-import time, sys, gaugette.ssd1306, subprocess, socket
+import time, sys, gaugette.ssd1306, subprocess, socket, hashlib
 		
 def displaymessage(message1, message2=""):
 	led.clear_display()
@@ -18,7 +18,6 @@ def keypadinput():
 	try:
 		while True:
 			if len(input) == 6:
-				print ""
 				return input
 			else:	
 				if len(input) == 0:
@@ -30,15 +29,11 @@ def keypadinput():
 					GPIO.output(col[y], 0)
 					for x in range(4):
 						if GPIO.input(row[x]) == 0:
-							input += matrix[x][y]
+							input = input[:-1] if (matrix[x][y] == "\b") else input + matrix[x][y]
 							starbuffer = "*" * len(input)
-							sys.stdout.write("*")
-							sys.stdout.flush()
 							while GPIO.input(row[x]) == 0:
 								time.sleep(0.1)
 					GPIO.output(col[y], 1)					
-	except KeyboardInterrupt as e:
-		print "Cleaning up", e
 	except Exception as e:
 		print "Cleaning up", e
 		
@@ -47,6 +42,22 @@ def inputtohex(input):
 	for x in range(len(input)):
 		toret += "%0.2X " % ord(input[x])
 	return toret
+	
+def authenticate(binary):
+	try:
+		hash = hashlib.sha1(binary).hexdigest()
+		sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		sock.connect((raw_input("Enter IP address of server: "), 1625))
+		
+		sock.send("[AUTH]\t" + hash)
+		response = sock.recv(1024)
+		sock.send("[EXIT]")
+		if response == "[DONE]":
+			return True
+		return False
+	except (Exception, socket.error) as e:
+		print "Something went wrong, possibly with the connection to the server. Please try again later"
+		return False
 	
 def main():
 	##
@@ -59,31 +70,33 @@ def main():
 	#	> If successful, program logs to server User identity
 	#
 
-	input = inputtohex(keypadinput())
-	
-	print "You typed:", input
-	input = input.split(" ")
-	
-	displaymessage("Please tap your", "RFID")
-	
-	proc = subprocess.Popen(["./newcode", input[0], input[1], input[2], input[3], input[4], input[5]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-	(output, error) = proc.communicate()
-	
-	print output
-	if output != "":
-		# sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		# sock.bind((raw_input("Enter IP address of host: "), 1625))
-		# sock.send() #  send auth string
-		# sock.recv(1024)
-		 
-		displaymessage("Welcome!")
-		time.sleep(3)
-		
-	
-	led.clear_display()
-	led.display()
-	GPIO.output(12, 0)
-	GPIO.cleanup()
+	try:
+		while True:
+			input = inputtohex(keypadinput())
+			input = input.split(" ")
+			
+			displaymessage("Please tap your", "RFID")
+			
+			proc = subprocess.Popen(["./newcode", input[0], input[1], input[2], input[3], input[4], input[5]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			(output, error) = proc.communicate()
+			
+			print output
+			if output != "":
+				displaymessage("Authenticating.", "Please wait...")
+				if authenticate(str(output)):
+					displaymessage("Welcome!")
+					GPIO.output(12, 0)
+				else:
+					displaymessage("Access Denied")
+			else:
+				displaymessage("Error reading card")
+			
+			time.sleep(5)
+	except KeyboardInterrupt:
+		led.clear_display()
+		led.display()
+		GPIO.output(12, 0)
+		GPIO.cleanup()
 		
 if __name__ == '__main__':
 	global led, font, col, row

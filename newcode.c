@@ -30,7 +30,6 @@ void print_hex(uint8_t pbtData[], int szDate) {
 	int i;
 	for(i=0; i<szDate; i++)
 		printf("%02x", pbtData[i]);
-	printf("\n");
 }
 
 void readBlock(int start, int end) {
@@ -128,7 +127,7 @@ int main(int argc, char *argv[]) {
 			readBlock(1, 1);
 	}
 	
-	printf("Closing connection to NFC Reader...\n");
+	// printf("Closing connection to NFC Reader...\n");
 	nfc_close(pnd);
 	nfc_exit(context);
 	return 0;
