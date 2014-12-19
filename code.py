@@ -56,7 +56,7 @@ def authenticate(binary):
 			return True
 		return False
 	except (Exception, socket.error) as e:
-		print "Something went wrong, possibly with the connection to the server. Please try again later"
+		displaymessage("Error connecting", "to server")
 		return False
 	
 def main():
