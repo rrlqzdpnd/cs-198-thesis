@@ -57,6 +57,7 @@ def authenticate(binary):
 		return False
 	except (Exception, socket.error) as e:
 		displaymessage("Error connecting", "to server")
+		time.sleep(2)
 		return False
 	
 def main():
