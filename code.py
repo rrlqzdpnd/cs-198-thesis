@@ -73,22 +73,26 @@ def main():
 
 	try:
 		while True:
+			GPIO.output(12, 1) # LED is on (must authenticate)
+			
 			input = inputtohex(keypadinput())
-			input = input.split(" ")
+			input = input.strip().split(" ")
 			
 			displaymessage("Please tap your", "RFID")
 			
-			proc = subprocess.Popen(["./newcode", input[0], input[1], input[2], input[3], input[4], input[5]], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			params = ["./newcode"] + input
+			proc = subprocess.Popen(params, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 			(output, error) = proc.communicate()
-			
-			print output
+
 			if output != "":
 				displaymessage("Authenticating.", "Please wait...")
 				if authenticate(str(output)):
 					displaymessage("Welcome!")
+					print "Successfully authenticated. Welcome!"
 					GPIO.output(12, 0)
 				else:
 					displaymessage("Access Denied")
+					print "Access Denied"
 			else:
 				displaymessage("Error reading card")
 			
@@ -123,6 +127,5 @@ if __name__ == '__main__':
 		GPIO.setup(r, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 	
 	GPIO.setup(12, GPIO.OUT)
-	GPIO.output(12, 1)
 	
 	main()

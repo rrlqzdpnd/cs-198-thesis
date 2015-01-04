@@ -12,6 +12,7 @@ static nfc_target nt;
 static nfc_modulation nm = { .nmt = NMT_ISO14443A, .nbr = NBR_106 };
 static int keys[] = {
 	// insert new keys here
+	// DON'T FORGET TO UPDATE KEYS AT code.py!!!
 	0x50, 0x49, 0x4e, 0x41, 0x44, 0x4f,
 	0x31, 0x32, 0x31, 0x32, 0x31, 0x32,
 	// these should be deleted
