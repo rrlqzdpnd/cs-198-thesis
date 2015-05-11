@@ -11,7 +11,7 @@ def displaymessage(message1, message2=""):
 		led.draw_text3(0, 16, message2, font)
 	led.display()
 
-def keypadinput():
+def keypadPinInput():
 	input = ""
 	starbuffer = ""
 		
@@ -37,6 +37,25 @@ def keypadinput():
 	except Exception as e:
 		print "Cleaning up", e
 		
+def keypadChoiceInput():
+	input = ""
+	try:
+		while True:
+			if len(input) == 1:
+				return input
+			else:
+				if len(input) == 0:
+					displaymessage("1 for RFID", "2 for Phone")
+					
+				for y in range(3):
+					GPIO.output(col[y], 0)
+					for x in range(4):
+						if GPIO.input(row[x]) == 0:
+							input = matrix[x][y]
+					GPIO.output(col[y], 1)	
+	except Exception as e:
+		print "Cleaning up", e
+		
 def inputtohex(input):
 	toret = ""
 	for x in range(len(input)):
@@ -59,6 +78,31 @@ def authenticate(binary):
 		displaymessage("Error connecting", "to server")
 		time.sleep(2)
 		return False
+		
+def authCard():
+	input = inputtohex(keypadPinInput())
+	input = input.strip().split(" ")
+			
+	displaymessage("Please tap your", "RFID")
+		
+	params = ["./newcode"] + input
+	proc = subprocess.Popen(params, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	(output, error) = proc.communicate()
+
+	if output != "":
+		displaymessage("Authenticating.", "Please wait...")
+		if authenticate(str(output)):
+			displaymessage("Welcome!")
+			print "Successfully authenticated. Welcome!"
+			GPIO.output(12, 0)
+		else:
+			displaymessage("Access Denied")
+			print "Access Denied"
+	else:
+		displaymessage("Access Denied")
+		
+def authPhone():
+	pass
 	
 def main():
 	##
@@ -66,7 +110,7 @@ def main():
 	#  	> Program asks for PIN code
 	#  	> User enters PIN code (has to be 6 digits)
 	#	> Program then asks user to tap RFID card (will soon be phone with NFC)
-	#	> User taps RFID card
+	#	> User taps RFID card / Phone
 	#	> Program validates to server PIN-RFID combination
 	#	> If successful, program logs to server User identity
 	#
@@ -75,26 +119,16 @@ def main():
 		while True:
 			GPIO.output(12, 1) # LED is on (must authenticate)
 			
-			input = inputtohex(keypadinput())
-			input = input.strip().split(" ")
+			choice = keypadChoiceInput()
 			
-			displaymessage("Please tap your", "RFID")
-			
-			params = ["./newcode"] + input
-			proc = subprocess.Popen(params, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-			(output, error) = proc.communicate()
-
-			if output != "":
-				displaymessage("Authenticating.", "Please wait...")
-				if authenticate(str(output)):
-					displaymessage("Welcome!")
-					print "Successfully authenticated. Welcome!"
-					GPIO.output(12, 0)
-				else:
-					displaymessage("Access Denied")
-					print "Access Denied"
+			if choice == "1":
+				authCard()
+			elif choice == "2":
+				authPhone()
 			else:
-				displaymessage("Error reading card")
+				displaymessage("Invalid choice.")
+				time.sleep(2)
+				continue
 			
 			time.sleep(5)
 	except KeyboardInterrupt:
