@@ -88,21 +88,26 @@ def authCard():
 	params = ["./newcode"] + input
 	proc = subprocess.Popen(params, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	(output, error) = proc.communicate()
-
-	if output != "":
-		displaymessage("Authenticating.", "Please wait...")
-		if authenticate(str(output)):
-			displaymessage("Welcome!")
-			print "Successfully authenticated. Welcome!"
-			GPIO.output(12, 0)
-		else:
-			displaymessage("Access Denied")
-			print "Access Denied"
-	else:
-		displaymessage("Access Denied")
+	
+	return output
 		
 def authPhone():
-	pass
+	displaymessage("Please tap your", "phone.")
+
+	params = ["./libllcp/examples/snep-server/snep-server", "-o", "tmp.txt"]
+	proc = subprocess.Popen(params, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	proc.communicate()
+	
+	params = ["cat", "tmp.txt"]
+	proc = subprocess.Popen(params, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	(output, error) = proc.communicate()
+	output = inputtohex(output.split("\n")[-1]).replace(" ", "").lower()
+
+	params = ["rm", "tmp.txt"]
+	proc = subprocess.Popen(params, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	proc.communicate()
+	
+	return output
 	
 def main():
 	##
@@ -120,15 +125,29 @@ def main():
 			GPIO.output(12, 1) # LED is on (must authenticate)
 			
 			choice = keypadChoiceInput()
+			output = ""
 			
 			if choice == "1":
-				authCard()
+				output = authCard()
 			elif choice == "2":
-				authPhone()
+				output = authPhone()
 			else:
 				displaymessage("Invalid choice.")
 				time.sleep(2)
 				continue
+				
+	
+			if output != "":
+				displaymessage("Authenticating.", "Please wait...")
+				if authenticate(str(output)):
+					displaymessage("Welcome!")
+					print "Successfully authenticated. Welcome!"
+					GPIO.output(12, 0)
+				else:
+					displaymessage("Access Denied")
+					print "Access Denied"
+			else:
+				displaymessage("Access Denied")
 			
 			time.sleep(5)
 	except KeyboardInterrupt:
