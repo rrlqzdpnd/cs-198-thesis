@@ -52,6 +52,8 @@ def keypadChoiceInput():
 					for x in range(4):
 						if GPIO.input(row[x]) == 0:
 							input = matrix[x][y]
+							while GPIO.input(row[x]) == 0:
+								time.sleep(0.1)
 					GPIO.output(col[y], 1)	
 	except Exception as e:
 		print "Cleaning up", e
