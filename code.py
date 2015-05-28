@@ -94,7 +94,7 @@ def authCard():
 def authPhone():
 	displaymessage("Please tap your", "phone.")
 
-	params = ["./libllcp/examples/snep-server/snep-server", "-o", "tmp.txt"]
+	params = ["./snep-server", "-o", "tmp.txt"]
 	proc = subprocess.Popen(params, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	proc.communicate()
 	
